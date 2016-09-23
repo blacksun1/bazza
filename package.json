@@ -1,0 +1,25 @@
+{
+  "name": "bazza",
+  "version": "0.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/blacksun1/bazza.git"
+  },
+  "keywords": [
+    "ioc"
+  ],
+  "author": {
+    "name": "Simon Bruce",
+    "email": "simon@blacksun.cx"
+  },
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/blacksun1/bazza/issues"
+  },
+  "homepage": "https://github.com/blacksun1/bazza#readme"
+}
