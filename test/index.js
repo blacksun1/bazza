@@ -79,6 +79,17 @@ describe('Start testing', () => {
         return done();
     });
 
+    it('should support retrieving the container', (done) => {
+
+        const sut = internals.sutFactory();
+
+        const actual = sut.get('container');
+
+        expect(actual).to.be.an.instanceOf(Sut).and.shallow.equal(sut);
+
+        return done();
+    });
+
     it('register should return undefined for a non existing object', (done) => {
 
         const sut = internals.sutFactory();
@@ -120,6 +131,45 @@ describe('Start testing', () => {
         const act = () => sut.register('foo', 'bar');
 
         expect(act).to.not.throw();
+
+        return done();
+    });
+
+    it('should throw if registering with a name of container', (done) => {
+
+        const sut = internals.sutFactory();
+
+        const act = () => sut.register('container', 'test');
+
+        expect(act).to.throw(Error, 'Name container is special and can\'t be redefined');
+
+        return done();
+    });
+
+    it('should throw error if invalid name is registered', (done) => {
+
+        const sut = internals.sutFactory();
+        const assertions = [
+            '1abc23',
+            'abc$',
+            'abc@',
+            'abc!',
+            'abc?',
+            'abc&',
+            'abc^',
+            'abc%',
+            'abc(',
+            'abc)',
+            'abc{',
+            'abc}',
+            'abc;',
+            'abc:'
+        ];
+
+        for (const assertion of assertions) {
+            const act = () => sut.register(assertion, 'test');
+            expect(act, 'assertion of assertion failed').to.throw(Error, 'Name must start with a letter and can only include letters, numbers, underscore (_) and hyphens (-)');
+        }
 
         return done();
     });
