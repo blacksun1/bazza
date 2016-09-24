@@ -1,0 +1,12 @@
+language: node_js
+before_script:
+
+script:
+  - npm run travis
+
+node_js:
+  - "4"
+  - "6"
+  - "node"
+
+sudo: false

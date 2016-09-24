@@ -5,7 +5,8 @@
   "main": "src/index.js",
   "scripts": {
     "test": "node_modules/.bin/lab -a code -c -L",
-    "test-and-fix": "node_modules/.bin/lab -a code -c -L --lint-fix"
+    "test-and-fix": "node_modules/.bin/lab -a code -c -L --lint-fix",
+    "travis": "./node_modules/.bin/lab --assert code --verbose --coverage -r lcov | node_modules/.bin/coveralls"
   },
   "engines": {
     "node": ">=4.0.0"
@@ -28,6 +29,7 @@
   "homepage": "https://github.com/blacksun1/bazza#readme",
   "devDependencies": {
     "code": "^4.0.0",
+    "coveralls": "^2.11.14",
     "lab": "^11.0.1"
   }
 }
