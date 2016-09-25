@@ -90,7 +90,7 @@ describe('Bazza', () => {
         return done();
     });
 
-    it('register should return undefined for a non existing object', (done) => {
+    it('get should return undefined for a non existing object', (done) => {
 
         const sut = internals.sutFactory();
 
@@ -101,7 +101,7 @@ describe('Bazza', () => {
         return done();
     });
 
-    it('register should return the object for an existing object', (done) => {
+    it('get should return the object for an existing object', (done) => {
 
         const sut = internals.sutFactory();
         const foo = 'bar';
@@ -110,6 +110,80 @@ describe('Bazza', () => {
         const actual = sut.get('foo');
 
         expect(actual).to.not.be.undefined().and.to.shallow.equal(foo);
+
+        return done();
+    });
+
+    it('get should return a new instance of a class', (done) => {
+
+        const sut = internals.sutFactory();
+        const foo = class {
+
+        };
+        sut.register('foo', foo);
+
+        const actual = sut.get('foo');
+
+        expect(actual).to.not.be.undefined();
+        expect(actual).to.not.shallow.equal(foo);
+        expect(actual).to.be.an.instanceOf(foo);
+
+        return done();
+    });
+
+    it('get should return a new instance of a class with injected arguments', (done) => {
+
+        // Arrange
+        const sut = internals.sutFactory();
+        const foo = class {
+            constructor(bar) {
+
+                this.bar = bar;
+            }
+            static get $inject() {
+
+                return ['bar'];
+            }
+        };
+        const bar = 'food';
+
+        sut.register('foo', foo);
+        sut.register('bar', bar);
+
+        // Act
+        const actual = sut.get('foo');
+
+        // Assert
+        expect(actual).to.not.be.undefined();
+        expect(actual).to.not.shallow.equal(foo);
+        expect(actual).to.be.an.instanceOf(foo);
+        expect(actual).to.include({ bar });
+
+        return done();
+    });
+
+    it('get should throw if a registration with a circular dependency is found', (done) => {
+
+        // Arrange
+        const sut = internals.sutFactory();
+        const foo = class {
+            constructor(bar) {
+
+                this.bar = bar;
+            }
+            static get $inject() {
+
+                return ['foo'];
+            }
+        };
+
+        sut.register('foo', foo);
+
+        // Act
+        const act = () => sut.get('foo');
+
+        // Assert
+        expect(act).to.throw(Error, /Circular dependency error in registration foo/);
 
         return done();
     });

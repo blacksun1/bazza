@@ -11,7 +11,11 @@ const internals = {};
 // Digits, numbers, underscore (_) or hyphen (-)
 internals.nameRegex = /^([A-Za-z]{1}[\w-_]*)(\[\])?$/;
 internals.containerName = 'container';
+// Use this function instead of new
+internals.newCall = function newCall(cls) {
 
+    return new (Function.prototype.bind.apply(cls, arguments));
+};
 
 // Implementation
 exports = module.exports = class {
@@ -26,9 +30,37 @@ exports = module.exports = class {
 
     get(name) {
 
-        if (this._registrations.has(name)) {
-            return this._registrations.get(name);
+        // Registration does not exist. Return undefined
+        if (!this._registrations.has(name)) {
+            return;
         }
+
+        const value = this._registrations.get(name);
+
+        // Value is not a function. Return the value
+        if (typeof value !== 'function') {
+            return value;
+        }
+
+        // Function does not have a $inject property. Just new it.
+        if (!value.$inject) {
+            return new value();
+        }
+
+        // Function does have an $inject property.
+        // 1. Attempt to resolve it's dependencies
+        // 2. Attempt to construct it
+        Assert(Array.isArray(value.$inject), '$inject is expected to be an array');
+        const args = value.$inject.map((argName) => {
+
+            if (argName === name) {
+                throw new Error(`Circular dependency error in registration ${argName}`);
+            }
+
+            return this.get(argName);
+        });
+
+        return internals.newCall.apply(this, [value].concat(args));
     }
 
     register(name, reference) {
