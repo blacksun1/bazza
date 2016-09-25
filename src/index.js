@@ -18,6 +18,7 @@ internals.newCall = function newCall(cls) {
 };
 
 // Implementation
+
 exports = module.exports = class {
 
     constructor(logger) {
@@ -35,34 +36,43 @@ exports = module.exports = class {
             return;
         }
 
+        // Get the value
         const value = this._registrations.get(name);
 
-        // Value is not a function. Return the value
+        // Value is not a function so just return it
         if (typeof value !== 'function') {
             return value;
         }
 
-        // Function does not have a $inject property. Just new it.
+        // Value is a Function
+
+        // Value does not have an $inject property. Just attemot to new it.
         if (!value.$inject) {
             return new value();
         }
 
         // Function does have an $inject property.
         // 1. Attempt to resolve it's dependencies
-        // 2. Attempt to construct it
         Assert(Array.isArray(value.$inject), '$inject is expected to be an array');
         const args = value.$inject.map((argName) => {
 
-            if (argName === name) {
+            const isDefaultable = argName.substring(argName.length - 1) === '?';
+            const nonNulledArgName = isDefaultable ? argName.substring(0, argName.length - 1) : argName;
+
+            if (nonNulledArgName === name) {
                 throw new Error(`Circular dependency error in registration ${argName}`);
             }
 
-            const newArgument = this.get(argName);
-            Assert(newArgument, 'Missing registration of foo');
+            const newArgument = this.get(nonNulledArgName);
+            Assert(isDefaultable || newArgument, `Missing registration of ${nonNulledArgName}`);
+            if (isDefaultable && !newArgument) {
+                return null;
+            }
 
             return newArgument;
         });
 
+        // 2. Attempt to construct and return it
         return internals.newCall.apply(this, [value].concat(args));
     }
 

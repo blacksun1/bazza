@@ -209,7 +209,36 @@ describe('Bazza', () => {
         const act = () => sut.get('foo');
 
         // Assert
-        expect(act).to.throw(Error, /Missing registration of foo/);
+        expect(act).to.throw(Error, /Missing registration of bar/);
+
+        return done();
+    });
+
+    it('get should not throw if a missing $inject value is found that is suffixed with ? Value should be injected with null', (done) => {
+
+        // Arrange
+        const sut = internals.sutFactory();
+        const foo = class {
+            constructor(bar) {
+
+                this.bar = bar;
+            }
+            static get $inject() {
+
+                return ['bar?'];
+            }
+        };
+
+        sut.register('foo', foo);
+
+        // Act
+        const act = () => sut.get('foo');
+
+        // Assert
+        expect(act).to.not.throw();
+        const actual = act();
+        expect(actual).to.not.be.undefined().and.be.an.instanceOf(foo);
+        expect(actual).to.include({ bar: null });
 
         return done();
     });
