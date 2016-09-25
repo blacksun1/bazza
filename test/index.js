@@ -30,7 +30,7 @@ internals.sutFactory = function sutFactory() {
 
 
 // Tests
-describe('Start testing', () => {
+describe('Bazza', () => {
 
     it('should export a function', (done) => {
 
@@ -70,7 +70,7 @@ describe('Start testing', () => {
 
 
     // get tests
-    it('should expose a get method', (done) => {
+    it('get should expose a get method', (done) => {
 
         const sut = internals.sutFactory();
 
@@ -79,7 +79,7 @@ describe('Start testing', () => {
         return done();
     });
 
-    it('should support retrieving the container', (done) => {
+    it('get should support retrieving the container', (done) => {
 
         const sut = internals.sutFactory();
 
@@ -113,6 +113,7 @@ describe('Start testing', () => {
 
         return done();
     });
+
 
     // register tests
     it('should expose a register method', (done) => {
@@ -149,27 +150,97 @@ describe('Start testing', () => {
     it('should throw error if invalid name is registered', (done) => {
 
         const sut = internals.sutFactory();
-        const assertions = [
-            '1abc23',
-            'abc$',
-            'abc@',
-            'abc!',
-            'abc?',
-            'abc&',
-            'abc^',
-            'abc%',
-            'abc(',
-            'abc)',
-            'abc{',
-            'abc}',
-            'abc;',
-            'abc:'
+        const invalidNames = [
+            '1abc23', 'abc$', 'abc@', 'abc!', 'abc?', 'abc&', 'abc^', 'abc%',
+            'abc(', 'abc)', 'abc{', 'abc}', 'abc;', 'abc:'
         ];
 
-        for (const assertion of assertions) {
-            const act = () => sut.register(assertion, 'test');
-            expect(act, 'assertion of assertion failed').to.throw(Error, 'Name must start with a letter and can only include letters, numbers, underscore (_) and hyphens (-)');
+        const act = (assertion) => sut.register(assertion, 'test');
+
+        for (const assertion of invalidNames) {
+            expect(act.bind(this, assertion), `assertion of ${assertion} failed`)
+                .to.throw(Error, 'Name must start with a letter and can only include letters, numbers, underscore (_) and hyphens (-)');
         }
+
+        return done();
+    });
+
+    it('register should overwrite an existing registration if name is registered again without suffix []', (done) => {
+
+        const sut = internals.sutFactory();
+        const foo = 'bar';
+        const baz = 'food';
+
+        sut.register('foo', foo);
+        sut.register('foo', baz);
+
+        const actual = sut.get('foo');
+
+        expect(actual).to.not.be.undefined().and.to.shallow.equal(baz);
+
+        return done();
+    });
+
+    it('register should register an array item when the name is suffixed with [] which will return an array of items rather than the single item', (done) => {
+
+        const sut = internals.sutFactory();
+        const foo = 'bar';
+
+        sut.register('foo[]', foo);
+
+        const actual = sut.get('foo[]');
+
+        expect(actual).to.not.be.undefined().be.an.array().and.to.only.include(foo);
+
+        return done();
+    });
+
+    it('register should register pushs to it\'s array any new items with the same name when the name is suffixed with []', (done) => {
+
+        const sut = internals.sutFactory();
+        const foo = 'bar';
+        const baz = 'food';
+
+        sut.register('foo[]', foo);
+        sut.register('foo[]', baz);
+
+        const actual = sut.get('foo[]');
+
+        expect(actual).to.not.be.undefined().and.be.an.array().and.to.only.include([foo, baz]);
+
+        return done();
+    });
+
+    it('register should de-register an existing non-array registration when registering a new array entry', (done) => {
+
+        const sut = internals.sutFactory();
+        const foo = 'bar';
+
+        sut.register('foo', foo);
+        sut.register('foo[]', foo);
+
+        const actualVar = sut.get('foo');
+        const actualArray = sut.get('foo[]');
+
+        expect(actualVar).to.be.undefined();
+        expect(actualArray).to.not.be.undefined().and.be.an.array().and.to.only.include(foo);
+
+        return done();
+    });
+
+    it('register should de-register an existing array item when registering a new non-array entry', (done) => {
+
+        const sut = internals.sutFactory();
+        const foo = 'bar';
+
+        sut.register('foo[]', foo);
+        sut.register('foo', foo);
+
+        const actualArray = sut.get('foo[]');
+        const actualVar = sut.get('foo');
+
+        expect(actualArray, 'actualArray').to.be.undefined();
+        expect(actualVar, 'actualVar').to.not.be.undefined().and.be.an.string().and.to.equal(foo);
 
         return done();
     });
