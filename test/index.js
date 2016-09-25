@@ -188,6 +188,32 @@ describe('Bazza', () => {
         return done();
     });
 
+    it('get should throw if a missing $inject value is found', (done) => {
+
+        // Arrange
+        const sut = internals.sutFactory();
+        const foo = class {
+            constructor(bar) {
+
+                this.bar = bar;
+            }
+            static get $inject() {
+
+                return ['bar'];
+            }
+        };
+
+        sut.register('foo', foo);
+
+        // Act
+        const act = () => sut.get('foo');
+
+        // Assert
+        expect(act).to.throw(Error, /Missing registration of foo/);
+
+        return done();
+    });
+
 
     // register tests
     it('should expose a register method', (done) => {

@@ -57,7 +57,10 @@ exports = module.exports = class {
                 throw new Error(`Circular dependency error in registration ${argName}`);
             }
 
-            return this.get(argName);
+            const newArgument = this.get(argName);
+            Assert(newArgument, 'Missing registration of foo');
+
+            return newArgument;
         });
 
         return internals.newCall.apply(this, [value].concat(args));

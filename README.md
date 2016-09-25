@@ -15,10 +15,11 @@ IOC Container.
 * 100% Code coverage.
 * Can register and get objects
 * Can register multiple items into an array item
+* Functions considered Classes and will be constructed and injected with
+  found arguments
 
 ## Not there yet
 
-* Functions considered Classes and will be newed
 * Basically, should replace the fantastic
   [Intravenous](https://github.com/RoyJacobs/intravenous/) which is no longer
   supported
