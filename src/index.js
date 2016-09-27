@@ -2,6 +2,7 @@
 
 // Imports
 const Assert = require('assert');
+const EventEmitter = require('events');
 
 
 // Internals
@@ -10,7 +11,9 @@ const internals = {};
 // Starts with a letter (A-Za-z) and then can use
 // Digits, numbers, underscore (_) or hyphen (-)
 internals.nameRegex = /^([A-Za-z]{1}[\w-_]*)(\[\])?$/;
-internals.containerName = 'container';
+
+internals.containerServiceName = 'container';
+
 // Use this function instead of new
 internals.newCall = function newCall(cls) {
 
@@ -19,14 +22,14 @@ internals.newCall = function newCall(cls) {
 
 // Implementation
 
-exports = module.exports = class {
+exports = module.exports = class extends EventEmitter {
 
-    constructor(logger) {
+    constructor() {
 
-        Assert(logger, 'Logger is a required argument');
-        this._logger = logger;
+        super();
+
         this._registrations = new Map();
-        this.set_(internals.containerName, this);
+        this.set_(internals.containerServiceName, this);
     }
 
     get(name) {
@@ -76,6 +79,12 @@ exports = module.exports = class {
         return internals.newCall.apply(this, [value].concat(args));
     }
 
+    dispose() {
+
+        this.emit('preDispose');
+        this.emit('postDispose');
+    }
+
     register(name, reference) {
 
         this.validateName_(name);
@@ -109,7 +118,7 @@ exports = module.exports = class {
 
     validateName_(name) {
 
-        Assert(name !== internals.containerName, `Name ${internals.containerName} is special and can't be redefined`);
+        Assert(name !== internals.containerServiceName, `Name ${internals.containerServiceName} is special and can't be redefined`);
         Assert(internals.nameRegex.test(name), 'Name must start with a letter and can only include letters, numbers, underscore (_) and hyphens (-)');
     }
 
