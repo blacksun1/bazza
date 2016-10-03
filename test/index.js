@@ -1,10 +1,12 @@
 'use strict';
 
 // Imports
-const Assert = require('assert');
 const Code = require('code');
 const Lab = require('lab');
 const Sut = require('../src/index');
+const TestClasses = require('./artifacts/test-classes');
+const LoggerFactory = require('blacksun1-chalk-logger').loggerFactory;
+const Assert = require('assert');
 
 
 // Test helpers
@@ -17,33 +19,71 @@ const expect = Code.expect;
 // Internals
 const internals = {};
 
+internals.stringifyWithFunctionName = function stringifyWithFunctionName(key, value) {
+
+    if (typeof value === 'function') {
+
+        return `function ${value.name}()`;
+    }
+
+    return value;
+};
+
+internals.stringify = function stringify(value) {
+
+    return JSON.stringify(value, internals.stringifyWithFunctionName, 2);
+};
+
+internals.logger = LoggerFactory();
+
+internals.log = function log(message) {
+
+    Assert(message, 'message must be defined');
+    Assert(message.message, 'message.message must be defined');
+
+    let data = '';
+    if (typeof message.data !== 'undefined') {
+        data = '\n' + internals.stringify(message.data);
+    }
+    const msg = message.message + data;
+
+    if (message.tags) {
+        if (message.tags.some((x) => x === 'fatal')) {
+            return internals.logger.fatal(msg);
+        }
+
+        if (message.tags.some((x) => x === 'error')) {
+            return internals.logger.error(msg);
+        }
+
+        if (message.tags.some((x) => x === 'warn')) {
+            return internals.logger.warn(msg);
+        }
+
+        if (message.tags.some((x) => x === 'info')) {
+            return internals.logger.info(msg);
+        }
+
+        if (message.tags.some((x) => x === 'debug')) {
+            return internals.logger.debug(msg);
+        }
+
+        if (message.tags.some((x) => x === 'trace')) {
+            return internals.logger.trace(msg);
+        }
+    }
+
+    return internals.logger.log(msg);
+};
+
 internals.sutFactory = function sutFactory() {
 
-    return new Sut();
+    const sut = new Sut();
+    sut.on('log', internals.log);
+
+    return sut;
 };
 
-internals.TestClass = class TestClass {
-
-    constructor(foo, bar, extra) {
-
-        Assert(foo, 'bar is a required argument');
-        Assert(typeof bar !== 'undefined', 'bar can not be undefined');
-        this.foo = foo;
-        this.bar = bar;
-        this.extra = extra;
-    }
-
-    static get $inject() {
-
-        return ['foo', 'bar?'];
-    }
-};
-
-internals.SimpleTestClass = class SimpleTestClass {
-
-    constructor() {
-    }
-};
 
 // Tests
 describe('Bazza', () => {
@@ -141,15 +181,15 @@ describe('Bazza', () => {
 
         // Arrange
         const sut = internals.sutFactory();
-        sut.register('SimpleTestClass', internals.SimpleTestClass);
+        sut.register('SimpleTestClass', TestClasses.SimpleTestClass);
 
         // Act
         const actual = sut.get('SimpleTestClass');
 
         // Assert
         expect(actual).to.not.be.undefined();
-        expect(actual).to.not.shallow.equal(internals.SimpleTestClass);
-        expect(actual).to.be.an.instanceOf(internals.SimpleTestClass);
+        expect(actual).to.not.shallow.equal(TestClasses.SimpleTestClass);
+        expect(actual).to.be.an.instanceOf(TestClasses.SimpleTestClass);
 
         return done();
     });
@@ -158,19 +198,17 @@ describe('Bazza', () => {
 
         // Arrange
         const sut = internals.sutFactory();
-        const foo = 'food';
-
-        sut.register('TestClass', internals.TestClass);
-        sut.register('foo', foo);
+        sut.register('TestClass', TestClasses.TestClass);
+        sut.register('foo', 'food');
 
         // Act
         const actual = sut.get('TestClass');
 
         // Assert
         expect(actual).to.not.be.undefined();
-        expect(actual).to.not.shallow.equal(internals.TestClass);
-        expect(actual).to.be.an.instanceOf(internals.TestClass);
-        expect(actual).to.include({ foo });
+        expect(actual).to.not.shallow.equal(TestClasses.TestClass);
+        expect(actual).to.be.an.instanceOf(TestClasses.TestClass);
+        expect(actual).to.include({ foo: 'food' });
 
         return done();
     });
@@ -179,7 +217,7 @@ describe('Bazza', () => {
 
         // Arrange
         const sut = internals.sutFactory();
-        sut.register('foo', internals.TestClass);
+        sut.register('foo', TestClasses.TestClass);
 
         // Act
         const act = () => sut.get('foo');
@@ -194,7 +232,7 @@ describe('Bazza', () => {
 
         // Arrange
         const sut = internals.sutFactory();
-        sut.register('TestClass', internals.TestClass);
+        sut.register('TestClass', TestClasses.TestClass);
 
         // Act
         const act = () => sut.get('TestClass');
@@ -210,7 +248,7 @@ describe('Bazza', () => {
         // Arrange
         const sut = internals.sutFactory();
 
-        sut.register('TestClass', internals.TestClass);
+        sut.register('TestClass', TestClasses.TestClass);
         sut.register('foo', 'foo');
 
         // Act
@@ -219,7 +257,7 @@ describe('Bazza', () => {
         // Assert
         expect(act).to.not.throw();
         const actual = act();
-        expect(actual).to.not.be.undefined().and.be.an.instanceOf(internals.TestClass);
+        expect(actual).to.not.be.undefined().and.be.an.instanceOf(TestClasses.TestClass);
         expect(actual).to.include({ foo: 'foo', bar: null, extra: undefined });
 
         return done();
@@ -229,23 +267,64 @@ describe('Bazza', () => {
 
         // Arrange
         const sut = internals.sutFactory();
-        sut.register('TestClass', internals.TestClass);
+        sut.register('TestClass', TestClasses.TestClass);
         sut.register('foo', 'foo');
 
         // Act
         const actual = sut.get('TestClass', 'extra');
 
         // Assert
-        expect(actual).to.be.instanceOf(internals.TestClass);
-        expect(actual).to.not.be.undefined().and.be.an.instanceOf(internals.TestClass);
+        expect(actual).to.not.be.undefined().and.be.an.instanceOf(TestClasses.TestClass);
         expect(actual).to.include({ foo: 'foo', bar: null, extra: undefined });
+
+        return done();
+    });
+
+    it('get should allow the construction of an array with values and services', (done) => {
+
+        // Arrange
+        const sut = internals.sutFactory();
+        sut.register('foo[]', TestClasses.SimpleTestClass);
+        sut.register('foo[]', 'Food');
+        sut.register('foo[]', TestClasses.SimpleTestClass2);
+
+        // Act
+        const actual = sut.get('foo[]');
+
+        // Assert
+        expect(actual).to.not.be.undefined().and.be.an.array().and.have.a.length(3);
+        expect(actual[0]).to.not.be.undefined().and.be.an.instanceOf(TestClasses.SimpleTestClass);
+        expect(actual[1]).to.not.be.undefined().and.equal('Food');
+        expect(actual[2]).to.not.be.undefined().and.be.an.instanceOf(TestClasses.SimpleTestClass2);
+
+        return done();
+    });
+
+    it('get should allow the construction of an object as the value in an array', (done) => {
+
+        // Arrange
+        const sut = internals.sutFactory();
+        sut.register('TestClassThatTakesArray', TestClasses.TestClassThatTakesArray);
+        sut.register('foo[]', TestClasses.SimpleTestClass);
+        sut.register('foo[]', TestClasses.SimpleTestClass2);
+        sut.register('foo[]', 'Food');
+
+        // Act
+        const actual = sut.get('TestClassThatTakesArray');
+
+        // Assert
+        expect(actual).to.not.be.undefined().and.be.an.instanceOf(TestClasses.TestClassThatTakesArray);
+        expect(actual.foo).to.not.be.undefined().be.an.array().and.have.a.length(3);
+        expect(actual.foo[0]).to.not.be.undefined().and.be.an.instanceOf(TestClasses.SimpleTestClass);
+        expect(actual.foo[1]).to.not.be.undefined().and.be.an.instanceOf(TestClasses.SimpleTestClass2);
+        expect(actual.foo[2]).to.not.be.undefined().and.equal('Food');
 
         return done();
     });
 
 
     // dispose tests
-    it('should expose a dispose method', (done) => {
+    it.skip('should expose a dispose method', (done) => {
 
         // Arrange
         const sut = internals.sutFactory();
@@ -256,29 +335,6 @@ describe('Bazza', () => {
         return done();
     });
 
-    it('dispose should emit a preDispose method', (done) => {
-
-        // Arrange
-        const sut = internals.sutFactory();
-
-        const act = () => sut.dispose();
-
-        // Assert
-        sut.on('preDispose', done);
-        act();
-    });
-
-    it('dispose should emit a postDispose method', (done) => {
-
-        // Arrange
-        const sut = internals.sutFactory();
-
-        const act = () => sut.dispose();
-
-        // Assert
-        sut.on('postDispose', done);
-        act();
-    });
 
     // register tests
     it('should expose a register method', (done) => {
@@ -315,7 +371,7 @@ describe('Bazza', () => {
         const act = () => sut.register('container', 'test');
 
         // Assert
-        expect(act).to.throw(Error, 'Name container is special and can\'t be redefined');
+        expect(act).to.throw(Error, /Name container is special and can\'t be redefined/);
 
         return done();
     });
@@ -335,7 +391,7 @@ describe('Bazza', () => {
         // Assert
         for (const assertion of invalidNames) {
             expect(act.bind(this, assertion), `assertion of ${assertion} failed`)
-                .to.throw(Error, 'Name must start with a letter and can only include letters, numbers, underscore (_) and hyphens (-)');
+                .to.throw(Error, /Name must start with a letter and can only include letters, numbers, underscores \(_\), hyphens \(-\) or periods \(\.\)\. Optional services can be suffixed with a \?/);
         }
 
         return done();
@@ -420,10 +476,8 @@ describe('Bazza', () => {
 
         // Arrange
         const sut = internals.sutFactory();
-        const foo = 'bar';
-
-        sut.register('foo[]', foo);
-        sut.register('foo', foo);
+        sut.register('foo[]', 'bar');
+        sut.register('foo', 'bar');
 
         // Act
         const actualArray = sut.get('foo[]');
@@ -431,7 +485,7 @@ describe('Bazza', () => {
 
         // Assert
         expect(actualArray, 'actualArray').to.be.undefined();
-        expect(actualVar, 'actualVar').to.not.be.undefined().and.be.an.string().and.to.equal(foo);
+        expect(actualVar, 'actualVar').to.not.be.undefined().and.be.an.string().and.to.equal('bar');
 
         return done();
     });

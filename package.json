@@ -28,6 +28,7 @@
   },
   "homepage": "https://github.com/blacksun1/bazza#readme",
   "devDependencies": {
+    "blacksun1-chalk-logger": "^1.0.2",
     "code": "^4.0.0",
     "coveralls": "^2.11.14",
     "lab": "^11.0.1"

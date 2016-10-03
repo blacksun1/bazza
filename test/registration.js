@@ -76,7 +76,31 @@ describe('registration', () => {
         // Assert
         expect(actual).includes({
             name: testName,
+            fullName: testName,
             value: testValue,
+            isArray: false,
+            isFunction: false,
+            injectables: []
+        });
+
+        return done();
+    });
+
+    it('constructor should create registration object array when given an array with reference constant', (done) => {
+
+        // Arrange
+        const testName = 'MyArray';
+        const testValue = 'Dingo';
+
+        // Act
+        const actual = new Sut(`${testName}[]`, testValue);
+
+        // Assert
+        expect(actual).includes({
+            name: testName,
+            fullName: `${testName}[]`,
+            value: [new Sut(testName, testValue)],
+            isArray: true,
             isFunction: false,
             injectables: []
         });
@@ -96,7 +120,9 @@ describe('registration', () => {
         // Assert
         expect(actual).includes({
             name: testName,
+            fullName: testName,
             value: testValue,
+            isArray: false,
             isFunction: true,
             injectables: [
                 { name: 'a', required: true },
@@ -119,6 +145,34 @@ describe('registration', () => {
 
         // Assert
         expect(act).to.throw(Error, /Name must start with a letter and can only include letters, numbers, underscores \(_\), hyphens \(-\) or periods \(\.\)\. Optional services can be suffixed with a \?/);
+
+        return done();
+    });
+
+    it('push should add extra values to value array', (done) => {
+
+        // Arrange
+        const testName = 'MyArray';
+        const testValues = [
+            'Dingo',
+            '8mybaby'
+        ];
+
+        // Act
+        const actual = new Sut(`${testName}[]`, testValues[0]);
+        for (let i = 1; i < testValues.length; ++i) {
+            actual.push(new Sut(testName, testValues[i]));
+        }
+
+        // Assert
+        expect(actual).includes({
+            name: testName,
+            fullName: `${testName}[]`,
+            value: testValues.map((testValue) => new Sut(testName, testValue)),
+            isArray: true,
+            isFunction: false,
+            injectables: []
+        });
 
         return done();
     });

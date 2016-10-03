@@ -10,7 +10,7 @@ const internals = {};
 // Starts with a letter (A-Za-z) and then can use
 // Digits, numbers, underscore (_), hyphen (-) or dot (.)
 internals.nameRegex = /^([A-Za-z]{1}[\w-_.]*)(\[\])?$/;
-internals.injectableNameRegex = /^([A-Za-z][\w-_.]*)([?])?$/;
+internals.injectableNameRegex = /^([A-Za-z][\w-_.]*(?:\[\])?)([?])?$/;
 internals.validNameDescription = 'Name must start with a letter and can only include letters, numbers, underscores (_), hyphens (-) or periods (.). Optional services can be suffixed with a ?';
 
 exports = module.exports = class Registration {
@@ -18,15 +18,28 @@ exports = module.exports = class Registration {
     constructor(name, value) {
 
         Assert(name, 'name is required');
-        Assert(internals.nameRegex.test(name), internals.validNameDescription);
-        Assert(value, 'value is required');
+        Assert(typeof value !== 'undefined', 'value is required');
 
-        this.name = name;
-        this.value = value;
-        this.isFunction = (typeof value === 'function');
+        const nameMatch = internals.nameRegex.exec(name);
+        Assert(nameMatch !== null, internals.validNameDescription);
+
+        this.fullName = name;
+        this.name = nameMatch[1];
+        this.isArray = (typeof nameMatch[2] !== 'undefined' && nameMatch[2] === '[]');
+        this.isFunction = false;
         this.injectables = [];
 
+        if (this.isArray) {
+            this.value = [new Registration(this.name, value)];
+
+            return;
+        }
+
+        this.value = value;
+        this.isFunction = (typeof value === 'function');
+
         if (!this.isFunction || !value.$inject) {
+
             return;
         }
 
@@ -44,5 +57,12 @@ exports = module.exports = class Registration {
                 required: isRequired
             });
         }
+    }
+
+    push(value) {
+
+        this.value.push(value);
+
+        return this;
     }
 };
