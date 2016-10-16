@@ -1,12 +1,12 @@
 {
   "name": "bazza",
   "version": "0.2.0",
-  "description": "",
+  "description": "An IOC container for NodeJS",
   "main": "src/index.js",
   "scripts": {
-    "test": "node_modules/.bin/lab -a code -c -L",
-    "test-and-fix": "node_modules/.bin/lab -a code -c -L --lint-fix -r console -o stdout -r html -o coverage.html",
-    "travis": "./node_modules/.bin/lab --assert code --verbose --coverage -r lcov | node_modules/.bin/coveralls"
+    "test": "lab -a code -c -L",
+    "test-and-fix": "lab -a code -c -L --lint-fix -r console -o stdout -r html -o coverage.html",
+    "travis": "lab --assert code --verbose --coverage -r lcov | coveralls"
   },
   "engines": {
     "node": ">=4.0.0"
@@ -16,7 +16,8 @@
     "url": "git+https://github.com/blacksun1/bazza.git"
   },
   "keywords": [
-    "ioc"
+    "ioc",
+    "container"
   ],
   "author": {
     "name": "Simon Bruce",
