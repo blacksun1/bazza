@@ -1,6 +1,6 @@
 {
   "name": "bazza",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "An IOC container for NodeJS",
   "main": "src/index.js",
   "scripts": {
